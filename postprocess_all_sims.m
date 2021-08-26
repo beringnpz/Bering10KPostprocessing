@@ -23,7 +23,7 @@ vflag = true;
 % true for dry run (check for files and print intended action, but make no
 % changes) 
 
-dryrunflag = false;  
+dryrunflag = true;  
 
 % true to run in parallel
  
@@ -344,7 +344,8 @@ for isim = 1:nsim % for debugging
                 if Vars.addz(itype)
                     hasz = ismember({'z_psi', 'z_psi_w', 'z_rho', 'z_u', 'z_u_w', ...
                                      'z_v', 'z_v_w', 'z_w'}, l2v);
-                    if ~all(hasz)
+                    hasz = (itype<3 && all(hasz)) || (itype==3 && all(hasz([3 8])));
+                    if ~hasz
                         fprintf(fid, '  Level 2 depths, %s (%d/%d), group %d/%d: %s\n', filetype{itype}, isim, nsim, ii, ngrp, basegrp);
                         if dryrunflag
                             fprintf(fid, '   Will add depth variables\n');
