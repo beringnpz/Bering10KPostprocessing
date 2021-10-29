@@ -9,7 +9,11 @@ function roms_level3_coldpool(varargin)
 % variants; the survey-based index is also included for comparison.
 %
 % This function expects to find survey data (and sampling coordinates) in
-% the main roms_for_public folder
+% the main roms_for_public folder.
+%
+% Output from this function is saved to the Level 3 folder of the specified
+% simulation in a file named <simname>_coldpool.nc.  If a file with this
+% name already exists, no action will be taken.
 %
 % Optional input variables (passed as parameter/value pairs)
 %
@@ -36,6 +40,11 @@ p.addOptional('svyfile', 'AFSC_groundfish_survey_temperature_1982-2020.xlsx',  @
 
 p.parse(varargin{:});
 Opt = p.Results;
+
+fname = fullfile(moxdir, 'roms_for_public', Opt.sim, 'Level3', sprintf('%s_coldpool.nc', Opt.sim));
+if exist(fname, 'file')
+    error('Output file %s already exists; exiting', fname);
+end
 
 %--------------------
 % Setup
@@ -206,8 +215,6 @@ for imask = 1:nmask
     end
 end
 
-% cpool1 = reshape(cpool1, nsvyyear, []);
-
 %--------------------
 % Survey-replicated
 %--------------------
@@ -273,8 +280,6 @@ for imask = 1:nmask
     end
 end
 
-% cpool2 = reshape(cpool2, nsvyyear, []);
-
 %--------------------
 % July 1
 %--------------------
@@ -320,8 +325,6 @@ for imask = 1:nmask
         cpool3(:,imask,ith) = local(gweight.*double(btempjuly<thresh(ith)), gmask(:,:,imask), @nansum)/garea(imask);
     end
 end
-
-% cpool3 = reshape(cpool3, nt, []);
 
 %--------------------
 % Write to file
@@ -376,6 +379,7 @@ F = ncschema_adddims(F, ...
     'time',      length(A.time),   true);
 
 % Coordinate variables
+
 F = ncschema_addvars(F, ...
     'time', ...
     {'time'}, ...
@@ -389,7 +393,9 @@ F = ncschema_addvars(F, ...
     {'long_name', 'cold pool index threshold', ...
      'units', 'Celsius'}, ...
     'double');
+
 % Auxiliary coordinate variables
+
 F = ncschema_addvars(F, ...
     'region_label', ...
     {'len1', 'region', }, ...
@@ -400,7 +406,9 @@ F = ncschema_addvars(F, ...
     {'len2', 'method'}, ...
     {'long_name', 'index calculation source/method'}, ...
     'char');
+
 % Main data variables
+
 F = ncschema_addvars(F, ...
     'average_bottom_temp', ...
     {'region', 'method', 'time'}, ...
@@ -416,89 +424,9 @@ F = ncschema_addvars(F, ...
     'double');
 
 
-% NetCDF setup
-% 
-% F = struct;
-% 
-% F.Name = '/';
-% F.Format = 'classic';
-% 
-% % Global file attributes
-% 
-% hisstr = sprintf('%s: %s', ...
-%     datestr(now, 'ddd mmm dd HH:MM:SS yyyy'), ...
-%     'Cold pool indices file created via roms_level3_coldpool.m');
-% 
-% 
-% F.Attributes = attribstruct(...
-%     'Simulation', Opt.sim, ... 
-%     'history',    hisstr);
-% 
-% % Dimensions
-% 
-% dinfo = {...
-%     'region'    nmask            false
-%     'method'    size(A.method,1) false
-%     'threshold' nthresh          false
-%     'len1'      size(A.region,2) false
-%     'len2'      size(A.method,2) false
-%     'time'      Inf             true};
-% 
-% F.Dimensions = dimstruct(dinfo);
-% 
-% % Variable definitions
-% 
-% F.Variables = [...
-%     % Coordinate variables
-%     varstruct('time', ...
-%               {'time'}, ...
-%               {'long_name', 'time', ...
-%                'units', tunit, ...
-%                'calendar', 'standard'}, ...
-%               'double', ...
-%               [])
-%     varstruct('threshold', ...
-%               {'threshold'}, ...
-%               {'long_name', 'cold pool index threshold', ...
-%                'units', 'Celsius'}, ...
-%               'double', ...
-%               [])
-%     % Auxiliary coordinate variables
-%     varstruct('region_label', ...
-%               {'len1', 'region', }, ...
-%               {'long_name', 'geographic region'}, ...
-%               'char', ...
-%               [])
-%     varstruct('method_label', ...
-%               {'len2', 'method'}, ...
-%               {'long_name', 'index calculation source/method'}, ...
-%               'char', ...
-%               [])
-%     % Main data variables
-%     varstruct('average_bottom_temp', ...
-%               {'region', 'method', 'time'}, ...
-%               {'long_name', 'average bottom temperature in region', ...
-%                'units', 'Celsius', ...
-%                'coordinates', 'region_label, method_label'}, ...
-%               'double', ...
-%               [])
-%     varstruct('cold_pool_index', ...
-%               {'threshold', 'region', 'method', 'time'}, ...
-%               {'long_name', 'fraction of region less than threshold', ...
-%                'coordinates', 'region_label, method_label'}, ...
-%               'double', ...
-%               [])
-%     ];
-   
+% Create file and add data
 
-% Create file
-
-fname = fullfile(moxdir, 'roms_for_public', Opt.sim, 'Level3', sprintf('%s_coldpool.nc', Opt.sim));
-
-% F = updatencschema(F);
 ncwriteschema(fname, F);
-
-% Add data
 
 ncwrite(fname, 'time',                A.time);
 ncwrite(fname, 'threshold',           A.thresh);
@@ -508,47 +436,6 @@ ncwrite(fname, 'average_bottom_temp', A.btemp);
 ncwrite(fname, 'cold_pool_index',     A.cpool);
 
 end
-
-% %---------------
-% % Subfunctions
-% %---------------
-% 
-% % Dimensions structure
-% 
-% function D = dimstruct(dinfo)
-% 
-%     D = struct('Name', dinfo(:,1)', 'Length', dinfo(:,2)', 'Unlimited', dinfo(:,3)');
-%     
-% end
-% 
-% % Variable structure
-% 
-% function V = varstruct(vname, dimnames, atts, type, len)
-% 
-%     V.Name = vname;
-%     if isempty(dimnames)
-%         V.Dimensions = [];
-%         V.Size = len;
-%     else
-%         V.Dimensions = struct('Name', dimnames, 'Length', [], 'Unlimited', []);
-%         V.Size = [];
-%     end
-%     V.Attributes = attribstruct(atts{:});
-%     V.Datatype = type;
-% 
-% end
-% 
-% % Attributes structure
-% 
-% function A = attribstruct(varargin)
-% 
-%     atts = reshape(varargin, 2, []);
-%     A = struct('Name', atts(1,:), 'Value', atts(2,:));
-% 
-% end
-
-
-
 
 
 
