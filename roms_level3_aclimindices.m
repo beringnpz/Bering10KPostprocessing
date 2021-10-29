@@ -44,7 +44,11 @@ function roms_level3_aclimindices(varargin)
 %               ['AFSC_groundfish_survey_temperature_1982-2020.xlsx']
 %
 %   grdfile:    name of grid file for simulation.  This file should include
-%               the extended strata mask variables. 
+%               the extended strata mask variables. The function will
+%               first check to see if the file name resolves as a full or
+%               relative path name, then will look for a file matching the
+%               name in the primary roms_for_public folder
+%               ['Bering10K_extended_grid.nc']
 
 % Copyright 2021 Kelly Kearney
 
