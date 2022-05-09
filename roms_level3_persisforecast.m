@@ -90,8 +90,8 @@ nt = length(Btemp.t);
 doybin = linspace(0,1,53);
 idx = discretize(doy(Btemp.t, 'remdec'), doybin);
 
-isclim = year(Btemp.t) < yr;
-iscurrent = year(Btemp.t) == yr;
+isclim = year(Btemp.t) < Opt.year;
+iscurrent = year(Btemp.t) == Opt.year;
 
 Data.btemp_clim = splitapply(@(x) nanmean(x,1), ...
     permute(Btemp.temp(:,:,isclim),[3 1 2]), idx(isclim));
@@ -105,10 +105,10 @@ Data.tanom = Btemp.t(lastidx) + days([-3.5 3.5]);
 Data.tanom.Format = 'uuuu/MM/dd HH:mm';
 
 isleap = @(x) (mod(x,4)==0 & mod(x,100)~=0) | mod(x,400) == 0;
-if isleap(yr)
-    Data.clim_time_bnds = datetime(yr,1,1) + days(doybin)*366;
+if isleap(Opt.year)
+    Data.clim_time_bnds = datetime(Opt.year,1,1) + days(doybin)*366;
 else
-    Data.clim_time_bnds = datetime(yr,1,1) + days(doybin)*365;
+    Data.clim_time_bnds = datetime(Opt.year,1,1) + days(doybin)*365;
 end
 Data.clim_time = Data.clim_time_bnds(1:end-1)+diff(Data.clim_time_bnds)./2;
 
