@@ -64,6 +64,7 @@ end
 % Setup
 
 Grd = ncstruct(grdfile);
+[nxi, neta] = size(Grd.h);
 
 hcfol = fullfile(moxdir, 'roms_for_public', Opt.sim);
 
