@@ -483,7 +483,7 @@ ncwrite(filesrep, 'doy', Svy.DOY);
 %--------------------
 
 c = ConsoleProgressBar;
-c.setMaximum(idxlim(2));
+c.setMaximum(nvar);
 fprintf('Calculating indices...\n');
 c.start();
 
