@@ -93,7 +93,8 @@ filesrep = fullfile(moxdir, 'roms_for_public', Opt.sim, 'Level3', ...
     sprintf('ACLIMsurveyrep_C_%s.nc.', Opt.sim));
 
 if exist(filereg,'file') || exist(filesrep, 'file')
-    error('Output file(s) %s and/or %s already exist; exiting', filereg, filesrep);
+    fprintf('Output file(s) %s and/or %s already exist; exiting', filereg, filesrep);
+    return
 end
 
 %--------------------
