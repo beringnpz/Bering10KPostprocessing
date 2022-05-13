@@ -60,6 +60,7 @@ p = inputParser;
 p.addRequired('sim', @(x) validateattributes(x, {'char'}, {'scalartext'}));
 p.addOptional('svyfile', 'AFSC_groundfish_survey_temperature_1982-2020.xlsx',  @(x) validateattributes(x, {'char'}, {'scalartext'}));
 p.addOptional('grdfile', 'Bering10K_extended_grid.nc',  @(x) validateattributes(x, {'char'}, {'scalartext'}));
+p.addOptional('replace', false, @(x) validateattributes(x, {'logical'}, {'scalar'}));
 
 p.parse(varargin{:});
 Opt = p.Results;
@@ -93,8 +94,17 @@ filesrep = fullfile(moxdir, 'roms_for_public', Opt.sim, 'Level3', ...
     sprintf('ACLIMsurveyrep_C_%s.nc', Opt.sim));
 
 if exist(filereg,'file') || exist(filesrep, 'file')
-    fprintf('Output file(s) %s and/or %s already exist; exiting\n', filereg, filesrep);
-    return
+    if Opt.replace
+        if exist(filereg, 'file')
+            delete(filereg);
+        end
+        if exist(filesrep, 'file')
+            delete(filesrep);
+        end
+    else
+        fprintf('Output file(s) %s and/or %s already exist; exiting\n', filereg, filesrep);
+        return
+    end
 end
 
 %--------------------
