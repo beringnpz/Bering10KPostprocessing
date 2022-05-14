@@ -58,9 +58,9 @@ function roms_level3_aclimindices(varargin)
 
 p = inputParser;
 p.addRequired('sim', @(x) validateattributes(x, {'char'}, {'scalartext'}));
-p.addOptional('svyfile', 'AFSC_groundfish_survey_temperature_1982-2020.xlsx',  @(x) validateattributes(x, {'char'}, {'scalartext'}));
-p.addOptional('grdfile', 'Bering10K_extended_grid.nc',  @(x) validateattributes(x, {'char'}, {'scalartext'}));
-p.addOptional('replace', false, @(x) validateattributes(x, {'logical'}, {'scalar'}));
+p.addParameter('svyfile', 'AFSC_groundfish_survey_temperature_1982-2020.xlsx',  @(x) validateattributes(x, {'char'}, {'scalartext'}));
+p.addParameter('grdfile', 'Bering10K_extended_grid.nc',  @(x) validateattributes(x, {'char'}, {'scalartext'}));
+p.addParameter('mode', 'skip', @(x) validateattributes(x, {'char'}, {'scalartext'}));
 
 p.parse(varargin{:});
 Opt = p.Results;
@@ -93,18 +93,25 @@ filereg = fullfile(moxdir, 'roms_for_public', Opt.sim, 'Level3', ...
 filesrep = fullfile(moxdir, 'roms_for_public', Opt.sim, 'Level3', ...
     sprintf('ACLIMsurveyrep_C_%s.nc', Opt.sim));
 
-if exist(filereg,'file') || exist(filesrep, 'file')
-    if Opt.replace
+
+switch Opt.mode
+    case 'skip'
+        if exist(filereg,'file') || exist(filesrep, 'file')
+            fprintf('Output file(s) %s and/or %s already exist; exiting\n', filereg, filesrep);
+            return
+        end
+    case 'replace'
         if exist(filereg, 'file')
             delete(filereg);
         end
         if exist(filesrep, 'file')
             delete(filesrep);
         end
-    else
-        fprintf('Output file(s) %s and/or %s already exist; exiting\n', filereg, filesrep);
-        return
-    end
+    case 'test'
+        % This is the plough ahead mode, used mostly for testing and
+        % debugging
+    otherwise
+        error('Unrecognized mode; must be ''skip'', ''replace'', or ''test''');
 end
 
 %--------------------
@@ -123,7 +130,8 @@ lev1 = {'Ben', 'DetBen', ...
 lev2 = {'Cop_integrated'      , 'Cop_surface5m', ...       
         'EupO_integrated'     , 'EupO_surface5m', ...      
         'EupS_integrated'     , 'EupS_surface5m', ...      
-        'Iron_bottom5m'       , 'Iron_integrated',     'Iron_surface5m', ...      
+        'Iron_bottom5m'       , 'Iron_integrated',     'Iron_surface5m', ...    
+        'Fe_bottom5m'         , 'Fe_integrated',       'Fe_surface5m', ... 
         'Jel_integrated'      , 'Jel_surface5m', ...       
         'MZL_integrated'      , 'MZL_surface5m', ...       
         'NCaO_integrated'     , 'NCaO_surface5m', ...      
@@ -310,6 +318,26 @@ Vtbl = [...
     Vtbl
     cell2table(newdata, 'variablenames', Vtbl.Properties.VariableNames)];
 
+depthavg = {'temp', 'Iron', 'NH4', 'NO3', 'TIC', 'alkalinity', 'oxygen', ...
+    'pH', 'calcite', 'arag'}';
+depthavg1 = cellfun(@(x) [x '_depthavg'], depthavg, 'uni', 0);
+depthavg2 = cellfun(@(x) [x '_integrated'], depthavg, 'uni', 0);
+
+[tf, loc] = ismember(depthavg2, Vtbl.short);
+unittmp = Vtbl.unit(loc(tf));
+unittmp = strrep(unittmp, ')*m', '');
+unittmp = regexprep(unittmp, '^\(', '');
+nnew = sum(tf);
+newdata = [depthavg1(tf), ...
+           repmat({''}, nnew, 1), ...
+           strrep(Vtbl.long(loc(tf)), 'integrated over depth', 'averaged over depth'), ...
+           unittmp, ...
+           num2cell(zeros(nnew,1))];
+
+Vtbl = [...
+    Vtbl
+    cell2table(newdata, 'variablenames', Vtbl.Properties.VariableNames)];
+    
 % Time analysis
 
 fprintf('Reading times...\n');
@@ -397,7 +425,7 @@ for iv = 1:height(Vtbl)
     end
     
     F = ncschema_addvars(F, ...
-        Vtbl.short{iv}, ...
+        strrep(Vtbl.short{iv}, 'Iron_', 'Fe_'), ... % fixes Iron/Fe mix
         {'region', 'ocean_time'}, ...
         atts, ...
         'double');
@@ -472,7 +500,7 @@ for iv = 1:height(Vtbl)
     end
     
     F = ncschema_addvars(F, ...
-        Vtbl.short{iv}, ...
+        strrep(Vtbl.short{iv}, 'Iron_', 'Fe_'), ... % fixes Iron/Fe mix
         {'station', 'year'}, ...
         atts, ...
         'double');
@@ -480,14 +508,16 @@ end
 
 % Create file and add coordinate variable data
 
-ncwriteschema(filesrep, F);
+if ~exist(filesrep, 'file')
+    ncwriteschema(filesrep, F);
 
-ncwrite(filesrep, 'year', yr);
-ncwrite(filesrep, 'station_id', char(Svy.STATIONID)');
-ncwrite(filesrep, 'latitude', Svy.LATITUDE);
-ncwrite(filesrep, 'longitude', Svy.LONGITUDE);
-ncwrite(filesrep, 'stratum', Svy.STRATUM);
-ncwrite(filesrep, 'doy', Svy.DOY);
+    ncwrite(filesrep, 'year', yr);
+    ncwrite(filesrep, 'station_id', char(Svy.STATIONID)');
+    ncwrite(filesrep, 'latitude', Svy.LATITUDE);
+    ncwrite(filesrep, 'longitude', Svy.LONGITUDE);
+    ncwrite(filesrep, 'stratum', Svy.STRATUM);
+    ncwrite(filesrep, 'doy', Svy.DOY);
+end
 
 %--------------------
 % Calculate indices
@@ -518,9 +548,20 @@ for ii = 1:nvar
         [fracbelow0, fracbelow1, fracbelow2] = deal(nan(length(t),nmask));
     end
 
+    davgflag = endsWith(Vtbl.short{ii}, 'integrated') && ...
+               ismember(strrep(Vtbl.short{ii}, 'integrated', 'depthavg'), Vtbl.short);
+    if davgflag
+        davgvarreg  = nan(length(t), nmask);
+        davgvarsrep = nan(size(tsvy));
+    end
+        
     for ia = 1:length(avgfiles)
 
-        Tmp = ncstruct(avgfiles{ia}, Vtbl.internalshort{ii}, Scs);
+        if davgflag
+            Tmp = ncstruct(avgfiles{ia}, Vtbl.internalshort{ii}, 'zeta', Scs);
+        else
+            Tmp = ncstruct(avgfiles{ia}, Vtbl.internalshort{ii}, Scs);
+        end
         Tmp.t = ncdateread(avgfiles{ia}, 'ocean_time');
 
         % Regional averages
@@ -542,6 +583,15 @@ for ii = 1:nvar
                 fracbelow2(loc(tf),ir) = local(gweight.*double(Tmp.(Vtbl.internalshort{ii})(:,:,tf)<2), gmask(:,:,ir), @nansum)/garea(ir);
             end
         end
+        
+        % Depth-averaged
+        
+        if davgflag
+            davgval = Tmp.(Vtbl.internalshort{ii})./(Tmp.zeta + Grd.h);
+            for ir = 1:nmask
+                davgvarreg(loc(tf),ir) = local(davgval(:,:,tf), gmask(:,:,ir), 'weight', gweight, 'omitnan');
+            end
+        end
 
         % Survey rep
 
@@ -552,18 +602,29 @@ for ii = 1:nvar
         ttmp = ftsvyidx(usethisfile);
         idx = sub2ind(size(Tmp.(Vtbl.internalshort{ii})), xitmp, etatmp, ttmp);
         varsrep(usethisfile) = Tmp.(Vtbl.internalshort{ii})(idx);
+        
+        if davgflag
+            davgvarsrep(usethisfile) = davgval(idx);
+        end
 
     end
     
     % Write to file
         
-    ncwrite(filereg,  Vtbl.short{ii}, varreg');
-    ncwrite(filesrep, Vtbl.short{ii}, varsrep');
+    vtmp = strrep(Vtbl.short{ii}, 'Iron_', 'Fe_'); % fix Fe/Iron mix
+    
+    ncwrite(filereg,  vtmp, varreg');
+    ncwrite(filesrep, vtmp, varsrep');
 
     if cpflag
         ncwrite(filereg, 'fracbelow0', fracbelow0');
         ncwrite(filereg, 'fracbelow1', fracbelow1');
         ncwrite(filereg, 'fracbelow2', fracbelow2');
+    end
+    
+    if davgflag
+        ncwrite(filereg,  strrep(vtmp, 'integrated', 'depthavg'), davgvarreg');
+        ncwrite(filesrep, strrep(vtmp, 'integrated', 'depthavg'), davgvarsrep');
     end
 end
 c.stop();
