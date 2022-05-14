@@ -227,8 +227,8 @@ xilim = minmax([ixi; xisrep(:)]);
 etalim = minmax([ieta; etasrep(:)]);
 
 gmask = gmask(xilim(1):xilim(2), etalim(1):etalim(2), :);
-
 gweight = Grd.area_feast(xilim(1):xilim(2), etalim(1):etalim(2));
+gdepth = Grd.h(xilim(1):xilim(2), etalim(1):etalim(2));
 
 garea = zeros(nmask,1);
 for ii = 1:size(gmask,3)
@@ -587,7 +587,7 @@ for ii = 1:nvar
         % Depth-averaged
         
         if davgflag
-            davgval = Tmp.(Vtbl.internalshort{ii})./(Tmp.zeta + Grd.h);
+            davgval = Tmp.(Vtbl.internalshort{ii})./(Tmp.zeta + gdepth);
             for ir = 1:nmask
                 davgvarreg(loc(tf),ir) = local(davgval(:,:,tf), gmask(:,:,ir), 'weight', gweight, 'omitnan');
             end
