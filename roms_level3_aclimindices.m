@@ -61,6 +61,7 @@ p.addRequired('sim', @(x) validateattributes(x, {'char'}, {'scalartext'}));
 p.addParameter('svyfile', 'AFSC_groundfish_survey_temperature_1982-2020.xlsx',  @(x) validateattributes(x, {'char'}, {'scalartext'}));
 p.addParameter('grdfile', 'Bering10K_extended_grid.nc',  @(x) validateattributes(x, {'char'}, {'scalartext'}));
 p.addParameter('mode', 'skip', @(x) validateattributes(x, {'char'}, {'scalartext'}));
+p.addParameter('verbose', true, @(x) validateattributes(x, {'logical'}, {'scalar'}));
 
 p.parse(varargin{:});
 Opt = p.Results;
@@ -118,7 +119,9 @@ end
 % Setup
 %--------------------
 
-fprintf('Setup...\n');
+if Opt.verbose
+    fprintf('Setup...\n');
+end
 
 % ACLIM indices
 
@@ -340,7 +343,9 @@ Vtbl = [...
     
 % Time analysis
 
-fprintf('Reading times...\n');
+if Opt.verbose
+    fprintf('Reading times...\n');
+end
 
 avgfiles = dir(fullfile(moxdir, 'roms_for_public', Opt.sim, 'Level1', sprintf('%s_*_average_%s.nc', Opt.sim, lev1{1})));
 avgfiles = fullfile({avgfiles.folder}, {avgfiles.name});
@@ -523,15 +528,19 @@ end
 % Calculate indices
 %--------------------
 
-c = ConsoleProgressBar;
-c.setMaximum(nvar);
-fprintf('Calculating indices...\n');
-c.start();
+if Opt.verbose
+    c = ConsoleProgressBar;
+    c.setMaximum(nvar);
+    fprintf('Calculating indices...\n');
+    c.start();
+end
 
 for ii = 1:nvar
 
-    c.setValue(ii);
-    c.setText(sprintf('Index %2d/%2d', ii, nvar));
+    if Opt.verbose
+        c.setValue(ii);
+        c.setText(sprintf('Index %2d/%2d', ii, nvar));
+    end
 
     % Files
     
@@ -627,9 +636,10 @@ for ii = 1:nvar
         ncwrite(filesrep, strrep(vtmp, 'integrated', 'depthavg'), davgvarsrep');
     end
 end
-c.stop();
-fprintf('\n');
-
+if Opt.verbose
+    c.stop();
+    fprintf('\n');
+end
 
 
 
