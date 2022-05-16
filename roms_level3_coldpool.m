@@ -41,9 +41,9 @@ p.addParameter('svyfile', 'AFSC_groundfish_survey_temperature_1982-2020.xlsx',  
 p.parse(varargin{:});
 Opt = p.Results;
 
-fname = fullfile(moxdir, 'roms_for_public', Opt.sim, 'Level3', sprintf('%s_coldpool.nc', Opt.sim));
-if exist(fname, 'file')
-    error('Output file %s already exists; exiting', fname);
+outname = fullfile(moxdir, 'roms_for_public', Opt.sim, 'Level3', sprintf('%s_coldpool.nc', Opt.sim));
+if exist(outname, 'file')
+    error('Output file %s already exists; exiting', outname);
 end
 
 %--------------------
@@ -429,14 +429,14 @@ F = ncschema_addvars(F, ...
 
 % Create file and add data
 
-ncwriteschema(fname, F);
+ncwriteschema(outname, F);
 
-ncwrite(fname, 'time',                A.time);
-ncwrite(fname, 'threshold',           A.thresh);
-ncwrite(fname, 'region_label',        A.region');
-ncwrite(fname, 'method_label',        A.method');
-ncwrite(fname, 'average_bottom_temp', A.btemp);
-ncwrite(fname, 'cold_pool_index',     A.cpool);
+ncwrite(outname, 'time',                A.time);
+ncwrite(outname, 'threshold',           A.thresh);
+ncwrite(outname, 'region_label',        A.region');
+ncwrite(outname, 'method_label',        A.method');
+ncwrite(outname, 'average_bottom_temp', A.btemp);
+ncwrite(outname, 'cold_pool_index',     A.cpool);
 
 end
 
