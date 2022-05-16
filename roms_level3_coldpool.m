@@ -288,6 +288,9 @@ yr = unique(year(tunq));
 
 ttarget = datetime(yr,7,1);
 idx = interp1(tunq, iunq, ttarget, 'nearest');
+isgood = ~isnan(idx);
+ttarget = ttarget(isgood);
+idx = idx(isgood);
 nt = length(ttarget);
 
 % Build July temp dataset
