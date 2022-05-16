@@ -31,6 +31,7 @@ simdetails = {
 'B10K-H16_CMIP5_MIROC_rcp85'         , fullfile(b10koutfol, 'cmip5-avg/MIROC_rcp85/')                     ,'*avg*.nc'              ,'*his*.nc'             ,'*sta*.nc'            
 'B10K-K20nobio_CFS'                  , fullfile(b10koutfol, 'hindcasts/phys_201910_30_singlesource/Out/') ,'physhccfs*_avg_*.nc'   ,'physhccfs*_his_*.nc'  ,'physhccfs*_sta_*.nc' 
 'B10K-K20nobio_CORE'                 , fullfile(b10koutfol, 'hindcasts/phys_201910_30_singlesource/Out/') ,'physhccore*_avg_*.nc'  ,'physhccore*_his_*.nc' ,'physhccore*_sta_*.nc'
+'B10K-K20P19_CORECFS'                , '/gscratch/jisao/pilchd/Bering10k/output/hindcast_aug2021/OUT/'    ,'*avg*.nc'              ,'*his*.nc'             ,'*sta*.nc' 
 };
 
 simdetails = cell2table(simdetails, 'VariableNames', {'base','path', 'afilter', 'hfilter', 'sfilter'});

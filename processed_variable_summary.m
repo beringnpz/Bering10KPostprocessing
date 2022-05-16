@@ -174,7 +174,7 @@ if getattrib
                     V.coord{iv} = strrep(Vinfo.Dimensions(isxi).Name, 'xi_', '');
                 end
             else
-                error('Need to write station-parsing coordinates bit still...');
+%                 error('Need to write station-parsing coordinates bit still...');
                 V.ndim(iv) = length(Vinfo.Size) + 1;
             end
         end

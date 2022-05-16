@@ -59,9 +59,9 @@ nfile = height(Ftbl);
 
 % Mark simulation and level
 
-[pth, levfol] = fileparts(Ftbl.folder);
+[pth, levfol] = cellfun(@fileparts, Ftbl.folder, 'uni', 0);
 level = str2double(strrep(levfol, 'Level', ''));
-[pth, simfol] = fileparts(pth);
+[pth, simfol] = cellfun(@fileparts, pth, 'uni', 0);
 
 Ftbl.level = level;
 Ftbl.simulation = simfol;
