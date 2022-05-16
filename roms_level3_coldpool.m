@@ -17,7 +17,7 @@ function roms_level3_coldpool(varargin)
 %
 % Optional input variables (passed as parameter/value pairs)
 %
-%   simname:    string, name of simulation (in roms_for_public folder).
+%   sim:        string, name of simulation (in roms_for_public folder).
 %               This function assumes that Level 2 bottom temperature files
 %               have already been created for the indicated simulation.
 %               ['B10K-K20_CORECFS']
@@ -35,8 +35,8 @@ function roms_level3_coldpool(varargin)
 %--------------------
 
 p = inputParser;
-p.addOptional('sim', 'B10K-K20_CORECFS',  @(x) validateattributes(x, {'char'}, {'scalartext'}));
-p.addOptional('svyfile', 'AFSC_groundfish_survey_temperature_1982-2020.xlsx',  @(x) validateattributes(x, {'char'}, {'scalartext'}));
+p.addParameter('sim', 'B10K-K20_CORECFS',  @(x) validateattributes(x, {'char'}, {'scalartext'}));
+p.addParameter('svyfile', 'AFSC_groundfish_survey_temperature_1982-2020.xlsx',  @(x) validateattributes(x, {'char'}, {'scalartext'}));
 
 p.parse(varargin{:});
 Opt = p.Results;

@@ -254,7 +254,7 @@ nlayer = Ic.Size;
 
 for ii = length(lev1):-1:1
     V(ii).short = lev1{ii};
-     V(ii).internalshort = V(ii).short;
+    V(ii).internalshort = V(ii).short;
     
     F = dir(fullfile(moxdir, 'roms_for_public', Opt.sim, 'Level1', sprintf('%s_*_average_%s.nc', Opt.sim, V(ii).short)));
     fname = fullfile(F(1).folder, F(1).name);
