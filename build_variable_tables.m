@@ -16,14 +16,24 @@
 % The final spreadsheet documents which variables are available within each
 % simulation that has been postprocessed.
 
-moxdir = b10kdata;
+onmox = contains(moxdir, 'gscratch'); % read on mox, build file on local
 
 %--------------------
 % Variable summaries
 %--------------------
 
-V = processed_variable_summary(true);
-R = raw_variable_summary;
+varfile = sprintf('varsummary_%s.mat', datestr(datetime('today')));
+
+if onmox
+    V = processed_variable_summary(true);
+    R = raw_variable_summary;
+    save(varfile, 'R', 'V');
+    return
+else
+    R = load(varfile);
+    V = R.V;
+    R = R.R;
+end
 
 % Check that the same simulations are in the two
 
