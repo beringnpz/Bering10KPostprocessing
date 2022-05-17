@@ -156,7 +156,7 @@ if onmox
     
     % Save
 
-    save(varfile, 'Vtbl', '-append');
+    save(varfile, 'Vtbl');
     return
 else
     Vtbl = load(varfile);
