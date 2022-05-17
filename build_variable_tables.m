@@ -157,7 +157,10 @@ if onmox
     % Save
 
     save(varfile, 'Vtbl', '-append');
-
+    return
+else
+    Vtbl = load(varfile);
+    Vtbl = Vtbl.Vtbl;
 end
 
 %% Test plot
