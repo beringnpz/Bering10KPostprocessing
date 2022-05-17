@@ -22,156 +22,158 @@ onmox = contains(moxdir, 'gscratch'); % read on mox, build file on local
 % Variable summaries
 %--------------------
 
-varfile = sprintf('varsummary_%s.mat', datestr(datetime('today')));
+varfile = sprintf('varsummary_%s.mat', datestr(datetime('today'), 'yyyymmdd'));
 
 if onmox
     V = processed_variable_summary(true);
     R = raw_variable_summary;
-    save(varfile, 'R', 'V');
-    return
-else
-    R = load(varfile);
-    V = R.V;
-    R = R.R;
-end
+ 
+    % Check that the same simulations are in the two
 
-% Check that the same simulations are in the two
-
-test = isequal(sort(V.sname), sort(R.sname));
-if ~test
-    error('Sim mismatch... check raw_variables_summary table?');
-end
-
-%---------------------
-% Build combined table
-%---------------------
-
-sims = sort(V.sname);
-vars = setdiff(union(V.vname, R.vname), 'constants');
-
-nv = length(vars);
-ns = length(sims);
-
-% In raw files?  Fill in variable details from raw where possible
-
-Vtbl = table;
-Vtbl.name = vars;
-Vtbl.lname = cell(nv,1);
-Vtbl.units = cell(nv,1);
-Vtbl.grid_ah = cell(nv,1);
-Vtbl.grid_s = cell(nv,1);
-
-Vtbl.status = nan(nv,ns,3);
-
-[vtf,vloc] = ismember(R.vname, Vtbl.name);
-[~,sloc] = ismember(R.sname, sims);
-isinraw = false(nv,ns,3);
-isinraw(vloc(vtf),sloc,:) = R.varsaved;
-
-Vtbl.lname(vloc(vtf))   = R.lname(vtf);
-Vtbl.units(vloc(vtf))   = R.units(vtf);
-Vtbl.grid_ah(vloc(vtf)) = R.grid_ah(vtf);
-Vtbl.grid_s(vloc(vtf))  = R.grid_s(vtf);
-
-Vtbl.status(isinraw) = 0;
-
-% In processed files?  Fill in variable details where needed
-
-[vtf,vloc] = ismember(V.vname, Vtbl.name);
-[~,sloc] = ismember(V.sname, sims);
-
-hasfile = ~cellfun(@isempty, V.files);
-levfile = V.files(hasfile);
-levfile = regexp(levfile, 'Level(\d)', 'tokens', 'once');
-levfile = cellfun(@str2double, cat(1, levfile{:}));
-lev = nan(size(V.files));
-lev(hasfile) = levfile;
-lev = permute(max(lev,[],2), [3 1 4 2]);
-
-levinprocessed = nan(nv,ns,3);
-levinprocessed(vloc(vtf),sloc,:) = lev(vtf,:,:);
-
-mask = levinprocessed>0;
-Vtbl.status(mask) = levinprocessed(mask);
-
-isemp = cellfun(@isempty, Vtbl.lname);
-[~,loc] = ismember(Vtbl.name(isemp), V.vname);
-Vtbl.lname(isemp) = V.lname(loc);
-Vtbl.units(isemp) = V.units(loc);
-
-gtype = V.coord(loc);
-dims = V.ndim(loc);
-for ii = 1:length(gtype)
-    if ~isempty(gtype{ii})
-        gtype{ii} = sprintf('%s%dd', gtype{ii}(1), dims(ii)-1);
+    test = isequal(sort(V.sname), sort(R.sname));
+    if ~test
+        error('Sim mismatch... check raw_variables_summary table?');
     end
-end
-Vtbl.grid_ah(isemp) = gtype;
 
-for iv = 1:nv
-    if isempty(Vtbl.grid_ah{iv})
-        Vtbl.grid_ah{iv} = '';
-    end
-    if isempty(Vtbl.grid_s{iv})
-        Vtbl.grid_s{iv} = '';
-    end
-end
+    %---------------------
+    % Build combined table
+    %---------------------
 
-% ... constants
+    sims = sort(V.sname);
+    vars = setdiff(union(V.vname, R.vname), 'constants');
 
-isinlev1c = false(nv,ns,3); % in constants file
+    nv = length(vars);
+    ns = length(sims);
 
-for is = 1:ns
-    isc = strcmp(V.vname, 'constants');
-    for it = 1:3
-        cfiles = V.files(is,:,isc,it);
-        mask = cellfun(@isempty, cfiles);
-        if ~all(mask)
-            cfiles = cfiles(~mask);
-            I = ncinfo(cfiles{1});
-            cvars = {I.Variables.Name};
-            isinlev1c(:,is,it) = ismember(Vtbl.name, cvars);
+    % In raw files?  Fill in variable details from raw where possible
+
+    Vtbl = table;
+    Vtbl.name = vars;
+    Vtbl.lname = cell(nv,1);
+    Vtbl.units = cell(nv,1);
+    Vtbl.grid_ah = cell(nv,1);
+    Vtbl.grid_s = cell(nv,1);
+
+    Vtbl.status = nan(nv,ns,3);
+
+    [vtf,vloc] = ismember(R.vname, Vtbl.name);
+    [~,sloc] = ismember(R.sname, sims);
+    isinraw = false(nv,ns,3);
+    isinraw(vloc(vtf),sloc,:) = R.varsaved;
+
+    Vtbl.lname(vloc(vtf))   = R.lname(vtf);
+    Vtbl.units(vloc(vtf))   = R.units(vtf);
+    Vtbl.grid_ah(vloc(vtf)) = R.grid_ah(vtf);
+    Vtbl.grid_s(vloc(vtf))  = R.grid_s(vtf);
+
+    Vtbl.status(isinraw) = 0;
+
+    % In processed files?  Fill in variable details where needed
+
+    [vtf,vloc] = ismember(V.vname, Vtbl.name);
+    [~,sloc] = ismember(V.sname, sims);
+
+    hasfile = ~cellfun(@isempty, V.files);
+    levfile = V.files(hasfile);
+    levfile = regexp(levfile, 'Level(\d)', 'tokens', 'once');
+    levfile = cellfun(@str2double, cat(1, levfile{:}));
+    lev = nan(size(V.files));
+    lev(hasfile) = levfile;
+    lev = permute(max(lev,[],2), [3 1 4 2]);
+
+    levinprocessed = nan(nv,ns,3);
+    levinprocessed(vloc(vtf),sloc,:) = lev(vtf,:,:);
+
+    mask = levinprocessed>0;
+    Vtbl.status(mask) = levinprocessed(mask);
+
+    isemp = cellfun(@isempty, Vtbl.lname);
+    [~,loc] = ismember(Vtbl.name(isemp), V.vname);
+    Vtbl.lname(isemp) = V.lname(loc);
+    Vtbl.units(isemp) = V.units(loc);
+
+    gtype = V.coord(loc);
+    dims = V.ndim(loc);
+    for ii = 1:length(gtype)
+        if ~isempty(gtype{ii})
+            gtype{ii} = sprintf('%s%dd', gtype{ii}(1), dims(ii)-1);
         end
     end
+    Vtbl.grid_ah(isemp) = gtype;
+
+    for iv = 1:nv
+        if isempty(Vtbl.grid_ah{iv})
+            Vtbl.grid_ah{iv} = '';
+        end
+        if isempty(Vtbl.grid_s{iv})
+            Vtbl.grid_s{iv} = '';
+        end
+    end
+
+    % ... constants
+
+    isinlev1c = false(nv,ns,3); % in constants file
+
+    for is = 1:ns
+        isc = strcmp(V.vname, 'constants');
+        for it = 1:3
+            cfiles = V.files(is,:,isc,it);
+            mask = cellfun(@isempty, cfiles);
+            if ~all(mask)
+                cfiles = cfiles(~mask);
+                I = ncinfo(cfiles{1});
+                cvars = {I.Variables.Name};
+                isinlev1c(:,is,it) = ismember(Vtbl.name, cvars);
+            end
+        end
+    end
+
+    mask = isinlev1c & Vtbl.status == 0;
+    Vtbl.status(mask) = 1;
+
+    % Compare grid variables and classify variables as well as possible
+    % (Note: anything 2d and in station files only won't be able to be
+    % classified as rho, u, v, or psi).
+
+    vgrid1 = Vtbl.grid_ah;
+    gridtranslate = {'2d'   '*2d'
+                     'r'    'r3d'
+                     'w'    'w3d'};
+    [tf,loc] = ismember(Vtbl.grid_s, gridtranslate(:,1));
+    vgrid2 = Vtbl.grid_s;
+    vgrid2(tf) = gridtranslate(loc(tf),2);
+
+    isemp = cellfun(@isempty, [vgrid1 vgrid2]);
+    use2 = isemp(:,1) & ~isemp(:,2);
+    vgrid1(use2) = vgrid2(use2);
+
+    Vtbl.grid = vgrid1;
+    Vtbl = removevars(Vtbl, {'grid_ah','grid_s'});
+
+    % Sort
+
+    Vtbl = sortrows(Vtbl, {'grid', 'name'});
+    
+    % Save
+
+    save(varfile, 'Vtbl', '-append');
+
 end
 
-mask = isinlev1c & Vtbl.status == 0;
-Vtbl.status(mask) = 1;
+%% Test plot
 
-% Compare grid variables and classify variables as well as possible
-% (Note: anything 2d and in station files only won't be able to be
-% classified as rho, u, v, or psi).
-
-vgrid1 = Vtbl.grid_ah;
-gridtranslate = {'2d'   '*2d'
-                 'r'    'r3d'
-                 'w'    'w3d'};
-[tf,loc] = ismember(Vtbl.grid_s, gridtranslate(:,1));
-vgrid2 = Vtbl.grid_s;
-vgrid2(tf) = gridtranslate(loc(tf),2);
-             
-isemp = cellfun(@isempty, [vgrid1 vgrid2]);
-use2 = isemp(:,1) & ~isemp(:,2);
-vgrid1(use2) = vgrid2(use2);
-
-Vtbl.grid = vgrid1;
-Vtbl = removevars(Vtbl, {'grid_ah','grid_s'});
-
-% Sort
-
-Vtbl = sortrows(Vtbl, {'grid', 'name'});
-
-% Test plot
-
-h = spycolor(reshape(Vtbl.status, nv, []), NaN);
-set(h(1), 'sizedata', 5);
-gridxy(ns.*(1:3)+0.5);
-cmap = cptcmap('Set1_09');
-cmap = cmap(1:4,:);
-set(gca, 'clim', [-0.5 3.5], 'colormap', cmap);
+if ~onmox
+    h = spycolor(reshape(Vtbl.status, nv, []), NaN);
+    set(h(1), 'sizedata', 5);
+    gridxy(ns.*(1:3)+0.5);
+    cmap = cptcmap('Set1_09');
+    cmap = cmap(1:4,:);
+    set(gca, 'clim', [-0.5 3.5], 'colormap', cmap);
+end
 
 
 %% 
+
 %---------------------
 % Write to file
 %---------------------
