@@ -156,11 +156,20 @@ if onmox
     
     % Save
 
-    save(varfile, 'Vtbl');
+    save(varfile, 'Vtbl', 'V', 'R');
     return
 else
     Vtbl = load(varfile);
+    V = Vtbl.V;
+    R = Vtbl.R;
     Vtbl = Vtbl.Vtbl;
+    
+    sims = sort(V.sname);
+    vars = setdiff(union(V.vname, R.vname), 'constants');
+
+    nv = length(vars);
+    ns = length(sims);
+    
 end
 
 %% Test plot
