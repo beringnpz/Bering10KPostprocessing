@@ -49,7 +49,18 @@ function roms_level3_aclimindices(varargin)
 %               relative path name, then will look for a file matching the
 %               name in the primary roms_for_public folder
 %               ['Bering10K_extended_grid.nc']
-
+%
+%   mode:       sets how script treats existing files named
+%               ACLIMregion_<simname>.nc and ACLIMsurveyrep_<simname>.nc
+%               'skip':    exit without doing anything
+%               'replace': delete the existing files and build new ones
+%               'test':    run code without replacing existing (generally
+%                           only for testing, since the code is not
+%                           designed to gracefully merge new stuff into old
+%                           files 
+%
+%   verbose:    logical scalar, true to print progress to screen
+%               
 % Copyright 2021 Kelly Kearney
 
 %--------------------
@@ -89,10 +100,10 @@ end
 % Check for existing output
 
 filereg = fullfile(moxdir, 'roms_for_public', Opt.sim, 'Level3', ...
-    sprintf('ACLIMregion_C_%s.nc', Opt.sim));
+    sprintf('ACLIMregion_%s.nc', Opt.sim));
 
 filesrep = fullfile(moxdir, 'roms_for_public', Opt.sim, 'Level3', ...
-    sprintf('ACLIMsurveyrep_C_%s.nc', Opt.sim));
+    sprintf('ACLIMsurveyrep_%s.nc', Opt.sim));
 
 
 switch Opt.mode
