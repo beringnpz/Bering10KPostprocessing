@@ -8,8 +8,7 @@ if nargin < 2
     yrs = 1970:year(datetime('today'));
 end
 
-% outname = fullfile(moxdir, 'roms_for_public', sim, 'Level3', sprintf('%s_coldpool.nc', sim));
-outname = 'test.nc';
+outname = fullfile(moxdir, 'roms_for_public', sim, 'Level3', sprintf('%s_coldpool.nc', sim));
 
 outfileexists = exist(outname, 'file');
 
@@ -171,9 +170,9 @@ if ~outfileexists
     ncwrite(outname, 'cold_pool_index',     permute(Idx.cpool, [3 2 4 1]));
     
     if length(ttarget) > 1
-        ncaddhis(outname, sprintf('Data added for years %d-%d', year(minmax(ttarget))));
+        ncaddhis(outname, sprintf('Model July 1 data added for years %d-%d', year(minmax(ttarget))));
     else
-        ncaddhis(outname, sprintf('Data added for year %d', year(ttarget)));
+        ncaddhis(outname, sprintf('Model July 1 data added for year %d', year(ttarget)));
     end
     
 elseif addjul1data
@@ -191,9 +190,9 @@ elseif addjul1data
     ncwrite(outname, 'cold_pool_index',     permute(Idx.cpool, [3 2 4 1]), [1 1 1 sidx]);
     
     if length(ttarget) > 1
-        ncaddhis(outname, sprintf('Data added for years %d-%d', year(minmax(ttarget))));
+        ncaddhis(outname, sprintf('Model July 1 data added for years %d-%d', year(minmax(ttarget))));
     else
-        ncaddhis(outname, sprintf('Data added for year %d', year(ttarget)));
+        ncaddhis(outname, sprintf('Model July 1 data added for year %d', year(ttarget)));
     end
 else
     fprintf('Jul 1 indices already up to date\n');
@@ -208,6 +207,11 @@ srepfile = fullfile(rproj, 'data', 'survey_replicates_B10K-K20_CORECFS.csv');
 
 cpoolrepo = '~/Documents/Research/Working/ReposCode/coldpool/';
 svyfile = fullfile(cpoolrepo, 'data', 'index_hauls_temperature_data.csv');
+
+if ~exist(svyfile, 'file') || ~exist(rproj, 'dir')
+    warning('Survey file not found; exiting without prepping survey replicates');
+    return
+end
 
 srepexists = exist(srepfile, 'file');
 
