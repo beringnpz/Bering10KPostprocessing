@@ -162,6 +162,8 @@ if ~outfileexists
     
     ncwriteschema(outname, F);
     
+    fprintf('Adding July 1 indices...\n');
+
     ncwrite(outname, 'time',                A.time);
     ncwrite(outname, 'threshold',           A.thresh);
     ncwrite(outname, 'region_label',        A.region');
@@ -176,7 +178,8 @@ if ~outfileexists
     end
     
 elseif addjul1data
-    
+
+    fprintf('Adding July 1 indices...\n');    
     % Note: This will add new years after existing... mostly assuming that
     % we will stay in order, though that's not enforced.
     
