@@ -175,6 +175,17 @@ if ~outfileexists
         ncaddhis(outname, sprintf('Model July 1 data added for year %d', year(ttarget)));
     end
     
+    % Add Fill Value attribute to primary variables, which will include
+    % missing values (in years where survey and model do not overlap)
+    
+    ncid = netcdf.open(outname);
+    vid = netcdf.inqVarID(ncid, 'average_bottom_temp');
+    [~,fillValue] = netcdf.inqVarFill(ncid,vid);
+    netcdf.close(ncid);
+    
+    ncwriteatt(outname, 'average_bottom_temp', '_FillValue', fillValue);
+    ncwriteatt(outname, 'cold_pool_index', '_FillValue', fillValue);
+    
 elseif addjul1data
     
     % Note: This will add new years after existing... mostly assuming that
