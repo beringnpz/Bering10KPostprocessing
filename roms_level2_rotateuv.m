@@ -223,7 +223,7 @@ for ii = 1:length(Opt.ftype)
                 scin  = {[1 1 1 st(ic)], [Inf Inf Inf cn(ic)]}; % start, count
                 scout = [1 1 1 st(ic)]; % start
             else
-                scin  = {[1 1 st(ic)], [Inf Inf Inf cn(ic)]}; % start, count
+                scin  = {[1 1 st(ic)], [Inf Inf cn(ic)]}; % start, count
                 scout = [1 1 st(ic)]; % start
             end
 
