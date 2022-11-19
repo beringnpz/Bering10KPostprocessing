@@ -127,25 +127,41 @@ for ii = 1:length(Opt.ftype)
         
         if exist(ufile,'file') && ~exist(unew,'file')
             cmd = sprintf('ncks -F -v %s -d ocean_time,1,1 %s %s', vstr, ufile, unew);
-            system(cmd);
-
+            [s,r] = system(cmd);
+            if s
+                disp(cmd);
+                error(r);
+            end
+            
             cmd = sprintf('ncks -A -v lat_rho,lon_rho %s %s', Opt.gridfile, unew);
-            system(cmd);
+            [s,r] = system(cmd);
+            if s
+                disp(cmd);
+                error(r);
+            end
         end
         if exist(vfile,'file') && ~exist(vnew,'file')
-            cmd = sprintf('ncks -F -v %s-d ocean_time,1,1 %s %s', vstr, vfile, vnew);
-            system(cmd);
+            cmd = sprintf('ncks -F -v %s -d ocean_time,1,1 %s %s', vstr, vfile, vnew);
+            [s,r] = system(cmd);
+            if s
+                disp(cmd);
+                error(r);
+            end
 
             cmd = sprintf('ncks -A -v lat_rho,lon_rho %s %s', Opt.gridfile, vnew);
-            system(cmd); 
+            [s,r] = system(cmd);
+            if s
+                disp(cmd);
+                error(r);
+            end 
         end
     
         % Loop over data to shift and rotate
 
         I = ncinfo(ufile);
         nt = I.Dimensions(strcmp({I.Dimensions.Name}, 'ocean_time')).Length;
-        nxi = I.Dimensions(strcmp({I.Dimensions.Name}, 'xi_rho')).Length;
-        neta = I.Dimensions(strcmp({I.Dimensions.Name}, 'eta_rho')).Length;
+        nxi = I.Dimensions(strcmp({I.Dimensions.Name}, 'xi_u')).Length+1;
+        neta = I.Dimensions(strcmp({I.Dimensions.Name}, 'eta_u')).Length;
     
         % Create new variables
 
