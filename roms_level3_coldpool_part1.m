@@ -1,14 +1,30 @@
-function roms_level3_coldpool_part1(sim, yrs)
+function roms_level3_coldpool_part1(sim, varargin)
 %ROMS_LEVEL3_COLDPOOL_PART1 Build/update cold pool metrics file
 %
 % roms_level3_coldpool_part1(sim)
 %
+% This function runs part 1 of the ROMS cold pool calculation.  It creates
+% the Level 3 [sim]_coldpool.nc file (if it doesn't exist) and adds the Jul
+% 1 mean temperature and cold pool index variables to it.  It also creates
+% (or adds to) the survey_replicates_[sim].csv.  Run
+% roms_level3_coldpool_part2.R (in the analysis/ folder of the coldpool R
+% repo) to add survey-based and survey-replicated indices to the .nc file.
 
-if nargin < 2
-    yrs = 1970:year(datetime('today'));
-end
+% Copyright 2023 Kelly Kearney
 
-outname = fullfile(moxdir, 'roms_for_public', sim, 'Level3', sprintf('%s_coldpool.nc', sim));
+% Parse input
+
+p = inputParser;
+p.addParameter('years', 1970:year(datetime('today')), @(x) validateattributes({'numeric'}, {'vector', 'integer', '>=', 1970, '<=', year(datetime('today'))}));
+p.addParameter('cpoolrepo', '~/Documents/Research/Working/ReposCode/coldpool/');
+
+p.parse(varargin{:});
+Opt = p.Results;
+
+% File setup
+
+outname  = fullfile(moxdir, 'roms_for_public', sim, 'Level3', sprintf('%s_coldpool.nc', sim));
+srepfile = fullfile(moxdir, 'roms_for_public', sim, 'Level3', sprintf('survey_replicates_%s.csv', sim));
 
 outfileexists = exist(outname, 'file');
 
@@ -53,7 +69,7 @@ nthresh = length(thresh);
 
 % Read data
 
-ttarget = datetime(yrs, 7, 1);
+ttarget = datetime(Opt.years, 7, 1);
 
 if outfileexists
     tcomplete = ncdateread(outname, 'time');
@@ -216,11 +232,10 @@ end
 % Survey-rep
 %---------------------
 
-rproj = '~/Documents/Research/Working/BeringSea/cold_pool_index';
-srepfile = fullfile(rproj, 'data', 'survey_replicates_B10K-K20_CORECFS.csv');
+% rproj = '~/Documents/Research/Working/BeringSea/cold_pool_index';
+% srepfile = fullfile(rproj, 'data', 'survey_replicates_B10K-K20_CORECFS.csv');
 
-cpoolrepo = '~/Documents/Research/Working/ReposCode/coldpool/';
-svyfile = fullfile(cpoolrepo, 'data', 'index_hauls_temperature_data.csv');
+svyfile = fullfile(Opt.cpoolrepo, 'data', 'index_hauls_temperature_data.csv');
 
 if ~exist(svyfile, 'file') || ~exist(rproj, 'dir')
     warning('Survey file not found; exiting without prepping survey replicates');
