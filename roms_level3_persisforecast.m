@@ -2,7 +2,7 @@ function roms_level3_persisforecast(varargin)
 %ROMS_LEVEL3_PERSISFORECAST Calculate bottom temp. persistence forecast
 %
 % roms_level3_persisforecast
-% roms_level3_persisforecast(param, value, ...)
+% roms_level3_persisforecast(param, val, ...
 %
 % This function calculates a persistence forecast for bottom temperature
 % extending from the last simulation date of the indicated year through the
@@ -35,7 +35,9 @@ function roms_level3_persisforecast(varargin)
 %
 %   year:       scalar indicating the last year of the hindcast.  It is
 %               expected that the specified simulation ends midway through
-%               the specified year.
+%               the specified year.  Alternatively, you can enter a
+%               specific datetime; the forecast will be based on data up to
+%               that date.
 %               [current year]
 
 % Copyright 2021 Kelly Kearney
@@ -45,9 +47,9 @@ function roms_level3_persisforecast(varargin)
 %--------------------
 
 p = inputParser;
-p.addOptional('sim', 'B10K-K20_CORECFS',  @(x) validateattributes(x, {'char'}, {'scalartext'}));
-p.addOptional('grdfile', 'Bering10K_extended_grid.nc',  @(x) validateattributes(x, {'char'}, {'scalartext'}));
-p.addOptional('year', year(datetime('today')), @(x) validateattributes(x, {'numeric'}, {'integer', '>=1970'}));
+p.addParameter('sim', 'B10K-K20_CORECFS',  @(x) validateattributes(x, {'char'}, {'scalartext'}));
+p.addParameter('grdfile', 'Bering10K_extended_grid.nc',  @(x) validateattributes(x, {'char'}, {'scalartext'}));
+p.addParameter('year', year(datetime('today')));
 
 p.parse(varargin{:});
 Opt = p.Results;
@@ -61,6 +63,18 @@ if ~exist(grdfile, 'file')
     error('Could not find indicated grid file: %s\n', Opt.grdfile);
 end
 
+yrisint = isnumeric(Opt.year) && floor(Opt.year)==Opt.year && Opt.year >= 1970;
+yrisdt  = isa(Opt.year, 'datetime') && Opt.year >= datetime(1970,1,15);
+
+if ~(yrisint || yrisdt)
+    error('Year input must be an interger >= 1970 or a datetime between 1970/01/15 and today');
+end
+
+if yrisdt
+    cutoffdate = Opt.year;
+    Opt.year = year(Opt.year);
+end
+    
 % Setup
 
 Grd = ncstruct(grdfile);
@@ -92,7 +106,11 @@ doybin = linspace(0,1,53);
 idx = discretize(doy(Btemp.t, 'remdec'), doybin);
 
 isclim = year(Btemp.t) < Opt.year;
-iscurrent = year(Btemp.t) == Opt.year;
+if yrisdt
+    iscurrent = Btemp.t <= cutoffdate;
+else
+    iscurrent = year(Btemp.t) == Opt.year;
+end
 
 Data.btemp_clim = splitapply(@(x) nanmean(x,1), ...
     permute(Btemp.temp(:,:,isclim),[3 1 2]), idx(isclim));
