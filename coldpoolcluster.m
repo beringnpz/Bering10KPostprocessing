@@ -98,19 +98,31 @@ btemp = reshape(B.btemp, nxi*neta, []);
 
 % Cold pool index timeseries
 
-[cp2, yrcp, tmid] = reshapetimeseries(Idx.t, Idx.fracbelow2, ...
-    'bin', 52, 'pivotdate', [10 1]);
-% [cp1, yrcp, tmid] = reshapetimeseries(Idx.t, Idx.fracbelow1, ...
+[~, Aligned2] = romsavgclimatology(Idx.fracbelow2, Idx.t, 'nbin', 52, ...
+    'realign', true, 'pivotmonth', 10);
+[~, Aligned0] = romsavgclimatology(Idx.fracbelow0, Idx.t, 'nbin', 52, ...
+    'realign', true, 'pivotmonth', 10);
+cp2 = Aligned2.y';
+cp0 = Aligned0.y';
+tmid = Aligned2.t(1,1:end-1)'+diff(Aligned2.t(1,:))'./2;
+yrcp = year(Aligned2.t(:,end))';
+
+
+% [cp2, yrcp, tmid] = reshapetimeseries(Idx.t, Idx.fracbelow2, ...
 %     'bin', 52, 'pivotdate', [10 1]);
-[cp0, yrcp, tmid] = reshapetimeseries(Idx.t, Idx.fracbelow0, ...
-    'bin', 52, 'pivotdate', [10 1]);
+% 
+% 
+% % [cp1, yrcp, tmid] = reshapetimeseries(Idx.t, Idx.fracbelow1, ...
+% %     'bin', 52, 'pivotdate', [10 1]);
+% [cp0, yrcp, tmid] = reshapetimeseries(Idx.t, Idx.fracbelow0, ...
+%     'bin', 52, 'pivotdate', [10 1]);
 
 seasonmask = days(tmid - tmid(1)) <= 315;
 cp2 = cp2(seasonmask,:);
 cp0 = cp0(seasonmask,:);
 tmid = tmid(seasonmask);
 
-yrcp = yrcp+1; % label based on summer month, not start
+% yrcp = yrcp+1; % label based on summer month, not start
 
 tmask = ismember(yrcp,Opt.years);
 cp0 = cp0(:,tmask);
@@ -296,6 +308,7 @@ for im = 1:length(metric)
         Out.h{im} = h;
     
     end
+    
 end
 
 Out.c = c;
