@@ -96,6 +96,7 @@ p.addParameter('folder', '', @(x) validateattributes(x, {'char'}, {'scalartext'}
 p.addParameter('avg', {}, @(x) isempty(x) || isfilecell(x));
 p.addParameter('his', {}, @(x) isempty(x) || isfilecell(x));
 p.addParameter('sta', {}, @(x) isempty(x) || isfilecell(x));
+p.addParameter('dia', {}, @(x) isempty(x) || isfilecell(x));
 p.addParameter('variables', {}, @(x) isempty(x) || iscellstr(x));
 p.addParameter('verbose', true, @(x) validateattributes(x, {'logical'}, {'scalar'}));
 p.addParameter('tbound', [NaT NaT], @(x) validateattributes(x, {'datetime'}, {'numel',2}));
@@ -115,24 +116,27 @@ hasfolder = ~isempty(Opt.folder) && isempty(Opt.avg) && isempty(Opt.his) && isem
 flag(1) = ~isempty(Opt.avg);
 flag(2) = ~isempty(Opt.his);
 flag(3) = ~isempty(Opt.sta);
+flag(4) = ~isempty(Opt.dia);
 
 hasfiles = isempty(Opt.folder) && any(flag);
 
 if (hasfolder && hasfiles) || (~hasfolder && ~hasfiles)
-    error('Must provide either folder or avg, his, and sta inputs');
+    error('Must provide either folder or avg, his, sta, and dia inputs');
 end
 
 % If folder provided as input, build file list
 
 if hasfolder
-    F = dir(fullfile(Opt.folder, '*avg*.nc'));
+    F = dir(fullfile(Opt.folder, '*_avg_*.nc'));
     Opt.avg = arrayfun(@(X) fullfile(X.folder,X.name), F, 'uni', 0);
-    F = dir(fullfile(Opt.folder, '*his*.nc'));
+    F = dir(fullfile(Opt.folder, '*_his_*.nc'));
     Opt.his = arrayfun(@(X) fullfile(X.folder,X.name), F, 'uni', 0);
-    F = dir(fullfile(Opt.folder, '*sta*.nc'));
+    F = dir(fullfile(Opt.folder, '*_sta_*.nc'));
     Opt.sta = arrayfun(@(X) fullfile(X.folder,X.name), F, 'uni', 0);
+    F = dir(fullfile(Opt.folder, '*_dia_*.nc'));
+    Opt.dia = arrayfun(@(X) fullfile(X.folder,X.name), F, 'uni', 0);
     
-    flag = true(1,3);
+    flag = true(1,4);
 end
 
 % Output folder must exist previously (safety precaution...)
@@ -177,6 +181,13 @@ if flag(3)
     end
     transferdata(Opt.sta, 'station', Opt.outfolder, Opt.outbase, Opt.gridfile, Opt.variables, Opt.tbound, Opt.verbose, Opt.constants);
 end
+if flag(4)
+    if Opt.verbose
+        fprintf('DIAGNOSTICS\n');
+    end
+    transferdata(Opt.dia, 'diagnos', Opt.outfolder, Opt.outbase, Opt.gridfile, Opt.variables, Opt.tbound, Opt.verbose, Opt.constants);
+end
+
 
 %----------------------
 % Transfer data: 
@@ -217,7 +228,7 @@ function transferdata(fname, ftype, outfolder, outbase, gridfile, variables, tbn
     ist = strcmp(vname, 'ocean_time');
 
     switch ftype
-        case {'average', 'history'}
+        case {'average', 'history', 'diagnos'}
             vargroup = {...
                 'r2d' 'xi_rho,eta_rho,ocean_time,'      
                 'r3d' 'xi_rho,eta_rho,s_rho,ocean_time,'
@@ -233,6 +244,8 @@ function transferdata(fname, ftype, outfolder, outbase, gridfile, variables, tbn
                 'r'   's_rho,station,ocean_time,'
                 'w'   's_w,station,ocean_time,'
                 };
+        otherwise
+            warning('New file type? roms_level1 may not be set up to handle this yet.');
     end
 
     % Get attributes
@@ -335,7 +348,7 @@ function transferdata(fname, ftype, outfolder, outbase, gridfile, variables, tbn
             % files, since the simulations in question didn't save station
             % files.
             
-            if ismember(ftype, {'average','history'}) && contains(vgrp{iv},'3d')
+            if ismember(ftype, {'average','history','diagnos'}) && contains(vgrp{iv},'3d')
                 In = ncinfo(newfile);
                 haszeta = ismember('zeta', {In.Variables.Name});
                 if ~haszeta
@@ -363,7 +376,7 @@ function transferdata(fname, ftype, outfolder, outbase, gridfile, variables, tbn
                     switch ftype
                         case 'average'
                             ncwriteatt(newfile, 'zeta', 'long_name', 'time-averaged free-surface');
-                        case 'history'
+                        case {'history', 'diagnos'}
                             ncwriteatt(newfile, 'zeta', 'long_name', 'free-surface');
                     end
                     ncwriteatt(newfile, 'zeta', 'units', 'meter');
@@ -376,7 +389,7 @@ function transferdata(fname, ftype, outfolder, outbase, gridfile, variables, tbn
             % If an average or history file, append the relevant lat/lon
             % coordinates to the file
             
-            if ismember(ftype, {'average','history'})
+            if ismember(ftype, {'average','history','diagnos'})
                 switch vgrp{iv}
                     case {'v2d', 'v3d'}
                         cmd = sprintf('ncks -A -v lat_v,lon_v %s %s', gridfile, newfile);
@@ -425,7 +438,7 @@ function transferdata(fname, ftype, outfolder, outbase, gridfile, variables, tbn
 
                     if any(isin{ifl})
                         switch ftype
-                            case {'average','history'}
+                            case {'average','history','diagnos'}
                                 switch vgrp{iv}
                                     case {'r2d', 'u2d', 'v2d'} % variable + time
                                         s = [1 1 sidx(ifl)];
