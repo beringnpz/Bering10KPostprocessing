@@ -85,7 +85,7 @@ m = I.Dimensions(loc(2)).Length;
 
 if ~Opt.simplesum
     if contains(Opt.zfilebase, 'diagnos')
-        zfile = sprintf('%s_%s.nc', strrep(Opt.zfilebase, '_diagnos_', '_average_'), zfield);
+        zfile = sprintf('%s_%s.nc', strrep(Opt.zfilebase, '_diagnos', '_average'), zfield);
     else
         zfile = sprintf('%s_%s.nc', Opt.zfilebase, zfield);
     end
