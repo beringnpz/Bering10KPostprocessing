@@ -84,7 +84,11 @@ n = I.Dimensions(loc(1)).Length;
 m = I.Dimensions(loc(2)).Length;
 
 if ~Opt.simplesum
-    zfile = sprintf('%s_%s.nc', Opt.zfilebase, zfield);
+    if contains(Opt.zfilebase, 'diagnos')
+        zfile = sprintf('%s_%s.nc', strrep(Opt.zfilebase, '_diagnos_', '_average_'), zfield);
+    else
+        zfile = sprintf('%s_%s.nc', Opt.zfilebase, zfield);
+    end
     if ~exist(zfile, 'file')
         error('Cannot find necessary depths file: %s', zfile);
     end
