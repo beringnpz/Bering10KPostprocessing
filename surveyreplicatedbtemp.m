@@ -15,8 +15,8 @@ function surveyreplicatedbtemp(sim, varargin)
 %
 % Input variables:
 %
-%   sim:    simulation name, corresponding to the name used for
-%           post-processing of the data
+%   sim:        simulation name, corresponding to the name used for
+%               post-processing of the data
 %
 % Optional input variables: 
 %
@@ -49,10 +49,28 @@ srepexists = exist(srepfile, 'file');
 if srepexists
     Old = readtable(srepfile);
     New = readtable(svyfile);
+
+    % Check for updates
+
+    Otmp = removevars(Old, 'model_bottom_temp');
+    [~,ia,ic] = intersect(Otmp(:,{'year','stationid'}), New(:,{'year','stationid'}));
+    O1 = sortrows(Otmp(ia,:), {'year','stationid'}); % should be same
+    N1 = sortrows(New(ic,:),  {'year','stationid'});
+    
+    if ~isequaln(O1,N1)
+        error('Differences found between stored data and new file');
+    end
+    
+    [~,ia,ic] = setxor(Otmp(:,{'year','stationid'}), New(:,{'year','stationid'}));
+    O2 = Otmp(ia,:);
+    
+    if ~isempty(O2)
+        error('There are points in stored data not found in new file');
+    end
     
     % TODO: need more robust way to check for updates to survey values
-    isnew = ~ismember(removevars(Old, 'model_bottom_temp'), New);
-    Svy = New(isnew,:);
+    % isnew = ~ismember(removevars(Old, 'model_bottom_temp'), New);
+    Svy = New(ic,:);
 else
     Svy = readtable(svyfile);
 end
@@ -64,31 +82,17 @@ Grd = ncstruct(Opt.grdfile);
 
 % Masks
 
-gmask = cell(4,1);
-gmask{1} = Grd.surveystrata_comboeast >= 10 & Grd.surveystrata_comboeast <= 62; % SEBS, no NW extension
-gmask{2} = gmask{1} | ismember(Grd.surveystrata_comboeast, [82 90]); % SEBS+NW
-gmask{3} = gmask{1} & Grd.h <= 200; % SEBS, no shelf mismatch
-gmask{4} = gmask{2} & Grd.h <= 200; % SEBS+NW, no shelf mismatch
-gmask = cat(3, gmask{:});
-
-maskname = {...
-    'SEBS-northwest'
-    'SEBS+northwest'
-    'SEBS-northwest, model shelf'
-    'SEBS+northwest, model shelf'};
-
-nmask = size(gmask,3);
+M = cpindexmasks(Grd);
 
 % Grid weighting
 
-gmaskany = any(gmask,3);
+gmask = any(M.mask,3);
 
-extractblock = @(x) x(any(gmaskany,2),any(gmaskany,1));
+extractblock = @(x) x(any(gmask,2),any(gmask,1));
 
 % Match points to closest model data
 
 if ~isempty(Svy)
-%     fprintf('Building survey-replicated data file\n');
 
     F = dir(fullfile(moxdir, 'roms_for_public', sim, 'Level2', '*average_temp_bottom5m.nc'));
     fname = fullfile({F.folder}, {F.name});
@@ -96,7 +100,7 @@ if ~isempty(Svy)
     t = ncdateread(fname, 'ocean_time');
 
     cvt = @(lt,ln) geodetic2enu(lt,ln, 0, ...
-        mean(Grd.lat_rho(gmaskany)), mean(Grd.lon_rho(gmaskany)), 0, ...
+        mean(Grd.lat_rho(gmask)), mean(Grd.lon_rho(gmask)), 0, ...
         referenceEllipsoid('earth', 'km'));
 
     [xgrd, ygrd] = cvt(extractblock(Grd.lat_rho), extractblock(Grd.lon_rho));
@@ -122,7 +126,7 @@ if ~isempty(Svy)
 
         isthistime = tclose == tunq(ii);
 
-        btmp = readbtemp('sim', sim, 'dates', t(tunq(ii)), 'mask', gmask);
+        btmp = readbtemp('sim', sim, 'dates', t(tunq(ii)), 'mask', M.mask);
 
         Svy.model_bottom_temp(isthistime) = btmp(gclose(isthistime));
 

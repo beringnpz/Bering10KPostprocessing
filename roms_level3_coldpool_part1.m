@@ -9,6 +9,8 @@ function roms_level3_coldpool_part1(sim, varargin)
 % (or adds to) the survey_replicates_[sim].csv.  Run
 % roms_level3_coldpool_part2.R (in the analysis/ folder of the coldpool R
 % repo) to add survey-based and survey-replicated indices to the .nc file.
+%
+% ***** DEPRECATED *****
 
 % Copyright 2023 Kelly Kearney
 
@@ -232,81 +234,84 @@ end
 % Survey-rep
 %---------------------
 
-% rproj = '~/Documents/Research/Working/BeringSea/cold_pool_index';
-% srepfile = fullfile(rproj, 'data', 'survey_replicates_B10K-K20_CORECFS.csv');
+fprintf('Updating survey-replicates .csv file\n');
+surveyreplicatedbtemp(sim, 'cpoolrepo', Opt.cpoolrepo);
 
-svyfile = fullfile(Opt.cpoolrepo, 'data', 'index_hauls_temperature_data.csv');
-
-if ~exist(svyfile, 'file') || ~exist(rproj, 'dir')
-    warning('Survey file not found; exiting without prepping survey replicates');
-    return
-end
-
-srepexists = exist(srepfile, 'file');
-
-if srepexists
-    Old = readtable(srepfile);
-    New = readtable(svyfile);
-    
-    isnew = ~ismember(removevars(Old, 'model_bottom_temp'), New);
-    Svy = New(isnew,:);
-else
-    Svy = readtable(svyfile);
-end
-
-% Match points to closest model data
-
-if ~isempty(Svy)
-    fprintf('Building survey-replicated data file\n');
-
-    F = dir(fullfile(moxdir, 'roms_for_public', sim, 'Level2', '*average_temp_bottom5m.nc'));
-    fname = fullfile({F.folder}, {F.name});
-
-    t = ncdateread(fname, 'ocean_time');
-
-    cvt = @(lt,ln) geodetic2enu(lt,ln, 0, ...
-        mean(Grd.lat_rho(gmaskany)), mean(Grd.lon_rho(gmaskany)), 0, ...
-        referenceEllipsoid('earth', 'km'));
-
-    [xgrd, ygrd] = cvt(extractblock(Grd.lat_rho), extractblock(Grd.lon_rho));
-    [xs, ys] = cvt(Svy.latitude, Svy.longitude);
-
-    [~, gclose] = pdist2([xgrd(:) ygrd(:)], [xs(:) ys(:)], 'euclidean', 'smallest', 1);
-
-    tclose = interp1(t, 1:length(t), Svy.start_time, 'nearest');
-    checknan = isnan(tclose);
-    if any(checknan)
-        warning('Survey data found outside of model time bounds; dropping these points from survey-rep dataset');
-        Svy = Svy(~checknan,:);
-        gclose = gclose(~checknan);
-        tclose = tclose(~checknan);
-    end
-    tunq = unique(tclose);
-
-    % Read data points
-
-    Svy.model_bottom_temp = nan(height(Svy),1);
-
-    for ii = 1:length(tunq)
-
-        isthistime = tclose == tunq(ii);
-
-        btmp = readbtemp('sim', sim, 'dates', t(tunq(ii)), 'mask', gmask);
-
-        Svy.model_bottom_temp(isthistime) = btmp(gclose(isthistime));
-
-    end
-
-    % Append new data to existing and write to file
-
-    if srepexists
-        Svy = [Old; Svy];
-    end
-
-    writetable(Svy, srepfile);
-else
-    fprintf('No new survey data found\n');
-end
+% % rproj = '~/Documents/Research/Working/BeringSea/cold_pool_index';
+% % srepfile = fullfile(rproj, 'data', 'survey_replicates_B10K-K20_CORECFS.csv');
+% 
+% svyfile = fullfile(Opt.cpoolrepo, 'data', 'index_hauls_temperature_data.csv');
+% 
+% if ~exist(svyfile, 'file') || ~exist(srepfile, 'file')
+%     warning('Survey file not found; exiting without prepping survey replicates');
+%     return
+% end
+% 
+% srepexists = exist(srepfile, 'file');
+% 
+% if srepexists
+%     Old = readtable(srepfile);
+%     New = readtable(svyfile);
+% 
+%     isnew = ~ismember(New, removevars(Old, 'model_bottom_temp'));
+%     Svy = New(isnew,:);
+% else
+%     Svy = readtable(svyfile);
+% end
+% 
+% % Match points to closest model data
+% 
+% if ~isempty(Svy)
+%     fprintf('Building survey-replicated data file\n');
+% 
+%     F = dir(fullfile(moxdir, 'roms_for_public', sim, 'Level2', '*average_temp_bottom5m.nc'));
+%     fname = fullfile({F.folder}, {F.name});
+% 
+%     t = ncdateread(fname, 'ocean_time');
+% 
+%     cvt = @(lt,ln) geodetic2enu(lt,ln, 0, ...
+%         mean(Grd.lat_rho(gmaskany)), mean(Grd.lon_rho(gmaskany)), 0, ...
+%         referenceEllipsoid('earth', 'km'));
+% 
+%     [xgrd, ygrd] = cvt(extractblock(Grd.lat_rho), extractblock(Grd.lon_rho));
+%     [xs, ys] = cvt(Svy.latitude, Svy.longitude);
+% 
+%     [~, gclose] = pdist2([xgrd(:) ygrd(:)], [xs(:) ys(:)], 'euclidean', 'smallest', 1);
+% 
+%     tclose = interp1(t, 1:length(t), Svy.start_time, 'nearest');
+%     checknan = isnan(tclose);
+%     if any(checknan)
+%         warning('Survey data found outside of model time bounds; dropping these points from survey-rep dataset');
+%         Svy = Svy(~checknan,:);
+%         gclose = gclose(~checknan);
+%         tclose = tclose(~checknan);
+%     end
+%     tunq = unique(tclose);
+% 
+%     % Read data points
+% 
+%     Svy.model_bottom_temp = nan(height(Svy),1);
+% 
+%     for ii = 1:length(tunq)
+% 
+%         isthistime = tclose == tunq(ii);
+% 
+%         btmp = readbtemp('sim', sim, 'dates', t(tunq(ii)), 'mask', gmask);
+% 
+%         Svy.model_bottom_temp(isthistime) = btmp(gclose(isthistime));
+% 
+%     end
+% 
+%     % Append new data to existing and write to file
+% 
+%     if srepexists
+%         Svy = [Old; Svy];
+%     end
+% 
+%     writetable(Svy, srepfile);
+% else
+%     fprintf('No new survey data found\n');
+% end
 
 
 
