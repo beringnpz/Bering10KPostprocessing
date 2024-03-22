@@ -98,12 +98,11 @@ if ~isempty(ttarget)
     ncwrite(outname, 'cold_pool_index',     permute(Idx.cpool, [3 2 4 1]), [1 1 1 sidx]);
     
     if length(ttarget) > 1
-        ncaddhis(outname, sprintf('Model July 1 data added for years %d-%d', year(minmax(ttarget))));
+        ncaddhis(outname, sprintf('Model July 1 data added for years %d-%d', year([min(ttarget) max(ttarget)])));
     else
         ncaddhis(outname, sprintf('Model July 1 data added for year %d', year(ttarget)));
     end
 
 end
-
 
 
