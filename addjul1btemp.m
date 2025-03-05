@@ -1,4 +1,4 @@
-function addjul1btemp(sim)
+function addjul1btemp(sim, varargin)
 %ADDJUL1BTEMP Add July 1 model-based bottom temp to cold pool index file
 %
 % addjul1btemp(sim)

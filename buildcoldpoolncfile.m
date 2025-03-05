@@ -37,8 +37,8 @@ function buildcoldpoolncfile(sim)
 
 outname  = fullfile(moxdir, 'roms_for_public', sim, 'Level3', sprintf('%s_coldpool.nc', sim));
 
-if exists(outname, 'file')
-    warning('Cold pool file for %s already exists', sim);
+if exist(outname, 'file')
+    warning('Cold pool file for %s already exists; no action taken', sim);
     return
 end
 

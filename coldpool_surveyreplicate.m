@@ -34,6 +34,10 @@ function coldpool_surveyreplicate(varargin)
 %               tempfile will be used.
 %               ['']
 %
+%   label:      Variable name to be used to label the survey-replicated
+%               bottom temperature in the output table
+%               ['model_bottom_temp']
+%
 %   vname:      variable name corresponding to temperature.  This must be
 %               either a 3D or 4D variable (including the time dimension)
 %               ['temp']

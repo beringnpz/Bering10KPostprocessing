@@ -31,7 +31,7 @@ M.name = {...
     'SEBS-northwest, model shelf'
     'SEBS+northwest, model shelf'};
 
-if nargin > 1
+if nargin > 0
     M.mask = cell(4,1);
     M.mask{1} = Grd.surveystrata_comboeast >= 10 & Grd.surveystrata_comboeast <= 62; % SEBS, no NW extension
     M.mask{2} = M.mask{1} | ismember(Grd.surveystrata_comboeast, [82 90]); % SEBS+NW
