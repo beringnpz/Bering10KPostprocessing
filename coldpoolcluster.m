@@ -198,8 +198,7 @@ for im = 1:length(metric)
         % Set up plot
 
         h = plotgrid('size', [1 2], 'mar', 0.05);
-        h.axr = subgrid(h.ax(2), [0.2 0.8], 1); % Dendrogram, timeseries
-        h.axr = cat(1, h.axr{:});
+        h.axr = subgridaxes(h.ax(2), [0.2 0.8], 1); % Dendrogram, timeseries
 
         setpos(h.fig, '# # 10in 10in');
         set(h.fig, 'color', 'w');
@@ -245,8 +244,7 @@ for im = 1:length(metric)
 
         if im == 1 % Line plots for indices
 
-            h.axl = subgrid(h.ax(1), ncluster, 2);
-            h.axl = reshape(cat(1, h.axl{:}), size(h.axl));
+            h.axl = subgridaxes(h.ax(1), ncluster, 2);
 
             for ii = 1:ncluster
                 isin = c(:,im) == corder(ii);
@@ -273,8 +271,7 @@ for im = 1:length(metric)
             latlim = minmax(Grd.lat_rho(mask{im-1}));
             lonlim = minmax(Grd.lon_rho(mask{im-1}));
 
-            h.axl = subgrid(h.ax(1), ceil(ncluster/2), 2);
-            h.axl = reshape(cat(1, h.axl{:}), [],2)';
+            h.axl = subgridaxes(h.ax(1), ceil(ncluster/2), 2);
             for ii = 1:ncluster
 
                 isin = c(:,im) == corder(ii);
