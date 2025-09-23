@@ -184,7 +184,7 @@ end
 
 % Post-processed file destination
 
-if ~exist(Opt.ppbase, 'folder')
+if ~exist(Opt.ppbase, 'dir')
     error('Postprocessing folder base location (%s) not found.  Check ppbase input option.', Opt.ppbase);
 end
 ppfol = fullfile(Opt.ppbase, simbase);

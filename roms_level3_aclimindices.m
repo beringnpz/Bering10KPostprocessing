@@ -198,16 +198,16 @@ Grd = ncstruct(grdfile);
 
 % Survey strata for regional masks
 
-stratafile1 = fullfile(moxdir, 'kearney/simAnalysis/gis_updated', 'EBS_NBS_2019.shp');
-stratafile2 = fullfile(moxdir, 'kearney/simAnalysis/ebsshelf_all2', 'ebsshelf_all.shp');
-Strata1 = shapeprjread(stratafile1);
-Strata2 = shapeprjread(stratafile2);
-for ii = 1:length(Strata1)
-    Strata1(ii).Lon = wrapTo360(Strata1(ii).Lon);
-end
-for ii = 1:length(Strata2)
-    Strata2(ii).Lon = wrapTo360(Strata2(ii).Lon);
-end
+% stratafile1 = fullfile(moxdir, 'kearney/simAnalysis/gis_updated', 'EBS_NBS_2019.shp');
+% stratafile2 = fullfile(moxdir, 'kearney/simAnalysis/ebsshelf_all2', 'ebsshelf_all.shp');
+% Strata1 = shapeprjread(stratafile1);
+% Strata2 = shapeprjread(stratafile2);
+% for ii = 1:length(Strata1)
+%     Strata1(ii).Lon = wrapTo360(Strata1(ii).Lon);
+% end
+% for ii = 1:length(Strata2)
+%     Strata2(ii).Lon = wrapTo360(Strata2(ii).Lon);
+% end
 
 % Regional masks: Survey strata.  For the outer shelf bits, we include
 % versions both with and without the bit beond the model 200-m isobath.

@@ -30,7 +30,7 @@ function coldpool_surveyreplicate(varargin)
 %               []
 %
 %   coordfile:  simulation coordinate file, file where lat/lon coordinates
-%               for the temperature variable are help.  If empty, the first
+%               for the temperature variable are held.  If empty, the first
 %               tempfile will be used.
 %               ['']
 %
@@ -130,7 +130,7 @@ if isempty(Opt.surveyfile)
 
     % GitHub-hosted version of coldpool R package
     
-    rawpath = 'https://raw.githubusercontent.com/afsc-gap-products/coldpool/main/data/index_hauls_temperature_data.csv';
+    rawpath = 'https://raw.githubusercontent.com/afsc-gap-products/coldpool/main/assets/index_hauls_temperature_data.csv';
     Svy = readtable(rawpath);
 else
     
@@ -255,7 +255,7 @@ cvt = @(lt,ln) geodetic2enu(lt,ln, 0, ...
     referenceEllipsoid('earth', 'km'));
 
 if isvector(C.x) && isvector(C.y)
-    [C.y, C.x] = ndgrid(C.y, C.x);
+    [C.x, C.y] = ndgrid(C.x, C.y);
 end
 
 if isempty(Opt.mask)
@@ -342,11 +342,11 @@ for it = tunq
     % Extract bottom temp  
 
     A = ncstruct(Opt.tempfiles, Scs, Opt.vname);
-    A.temp = permute(A.temp, prm); % should be xyz now, with singleton t (and singleton z unless NaN bottomlayer)
+    A.(Opt.vname) = permute(A.(Opt.vname), prm); % should be xyz now, with singleton t (and singleton z unless NaN bottomlayer)
     if isnan(Opt.bottomlayer)
-        btemp = bottom(A.temp);
+        btemp = bottom(A.(Opt.vname));
     else
-        btemp = A.temp;
+        btemp = A.(Opt.vname);
     end
 
     % Add data to points matching this time slice
