@@ -38,56 +38,6 @@ end
 
 dryrun = strcmp(Opt.mode, 'dryrun');
 
-% Default variables
-
-% if isempty(Opt.lev1)
-%     Opt.lev1 = {'Ben', 'DetBen', ...
-%                 'Hsbl', ...
-%                 'IceNH4', 'IceNO3', 'IcePhL', ...
-%                 'aice', 'hice', ...
-%                 'shflux', 'ssflux'};
-% end
-% if isempty(Opt.lev2)
-%     Opt.lev2 = {'Cop_integrated'      , 'Cop_surface5m', ...       
-%                 'EupO_integrated'     , 'EupO_surface5m', ...      
-%                 'EupS_integrated'     , 'EupS_surface5m', ...      
-%                 'Iron_bottom5m'       , 'Iron_integrated',     'Iron_surface5m', ...    
-%                 'Fe_bottom5m'         , 'Fe_integrated',       'Fe_surface5m', ... 
-%                 'Jel_integrated'      , 'Jel_surface5m', ...       
-%                 'MZL_integrated'      , 'MZL_surface5m', ...       
-%                 'NCaO_integrated'     , 'NCaO_surface5m', ...      
-%                 'NCaS_integrated'     , 'NCaS_surface5m', ...      
-%                 'NH4_bottom5m'        , 'NH4_integrated',      'NH4_surface5m', ...       
-%                 'NO3_bottom5m'        , 'NO3_integrated',      'NO3_surface5m', ...       
-%                 'PhL_integrated'      , 'PhL_surface5m' , ...      
-%                 'PhS_integrated'      , 'PhS_surface5m' , ...      
-%                 'prod_Cop_integrated' , ... 
-%                 'prod_EupO_integrated', ... 
-%                 'prod_EupS_integrated', ... 
-%                 'prod_Eup_integrated' , ... 
-%                 'prod_Jel_integrated' , ... 
-%                 'prod_MZL_integrated' , ... 
-%                 'prod_NCaO_integrated', ... 
-%                 'prod_NCaS_integrated', ... 
-%                 'prod_NCa_integrated' , ... 
-%                 'prod_PhL_integrated' , ... 
-%                 'prod_PhS_integrated' , ... 
-%                 'salt_surface5m'      , ... 
-%                 'temp_bottom5m'       , 'temp_integrated',     'temp_surface5m', ...      
-%                 'uEast_bottom5m'      , 'uEast_surface5m'  , ...   
-%                 'vNorth_bottom5m'     , 'vNorth_surface5m', ...
-%                 'alkalinity_bottom5m' , 'alkalinity_integrated'  , 'alkalinity_surface5m', ...
-%                 'TIC_bottom5m'        , 'TIC_integrated'         , 'TIC_surface5m', ...
-%                 'oxygen_bottom5m'     , 'oxygen_integrated'      , 'oxygen_surface5m', ...
-%                 'pH_bottom5m'         , 'pH_integrated'          , 'pH_surface5m', ...
-%                 'calcite_bottom5m'    , 'calcite_integrated'     , 'calcite_surface5m', ...
-%                 'arag_bottom5m'       , 'arag_integrated'        , 'arag_surface5m'};
-% end
-% if isempty(Opt.depthavg)
-%     Opt.depthavg = {'temp', 'Iron', 'NH4', 'NO3', 'TIC', 'alkalinity', 'oxygen', ...
-%                     'pH', 'calcite', 'arag'}';
-% end
-
 %---------------------------
 % Setup
 %---------------------------
@@ -99,42 +49,6 @@ end
 % Build masks
 
 G = buildmasks(Opt.grdfile);
-
-
-% Grd = ncstruct(Opt.grdfile, 'h', 'surveystrata_comboeast', 'area_feast');
-% [nxi, neta] = size(Grd.h);
-% 
-% isshelf = Grd.h <= 200;
-% 
-% [sidx, stratanum] = findgroups(Grd.surveystrata_comboeast(:));
-% 
-% gmask = arrayfun(@(x) Grd.surveystrata_comboeast == x, stratanum, 'uni', 0);
-% gmask_shelf = arrayfun(@(x) Grd.surveystrata_comboeast == x & isshelf, stratanum, 'uni', 0);
-% 
-% issame = cellfun(@(x,y) isequal(x,y), gmask, gmask_shelf);
-% 
-% gmask = [gmask(stratanum>0); gmask_shelf(~issame & stratanum>0)];
-% 
-% regname = [compose('stratum%03d', stratanum(stratanum>0)); ...
-%            compose('stratum%03db', stratanum(~issame & stratanum>0))]; % text label, b = shelf-cut version
-% regnum = [stratanum(stratanum>0); -stratanum(~issame & stratanum>0)]; % numeric label, negative = shelf-cut version
-% nreg = length(regnum);
-% 
-% gmask = cat(3, gmask{:});
-% nmask = size(gmask,3);
-% 
-% % Set up horizontal subsetting (to minimize data read)
-% 
-% [G.Scs, xilim, etalim] = romsmask2scs(any(gmask,3));
-% 
-% G.mask   = gmask(         xilim(1):xilim(2), etalim(1):etalim(2),:);
-% G.weight = Grd.area_feast(xilim(1):xilim(2), etalim(1):etalim(2));
-% G.depth  = Grd.h(         xilim(1):xilim(2), etalim(1):etalim(2));
-% 
-% G.area = zeros(nmask,1);
-% for ii = 1:size(gmask,3)
-%     G.area(ii) = sum(gweight(gmask(:,:,ii)));
-% end
 
 %---------------------------
 % Time and variable analysis
@@ -148,7 +62,7 @@ end
 
 [Vpp, fsample] = parsefiles(Opt.ppbase, sim);
 Vpp2d = Vpp(strcmp(Vpp.dimtype, '2r'),:);
-Vpp3d = Vpp(strcmp(Vpp.dimtype, '3r'),:);
+% Vpp3d = Vpp(strcmp(Vpp.dimtype, '3r'),:);
 
 nv = height(Vpp2d);
 
@@ -173,8 +87,8 @@ if exist(filereg, 'file')
     Iold = ncinfo(filereg);
     told = ncdateread(filereg, 'ocean_time');
 
-    [vnew, inew] = setdiff(Vpp2d.var, {Iold.Variables.Name});
-
+    [vnew, inew] = setdiff(strrep(Vpp2d.var, 'Iron_', 'Fe_'), {Iold.Variables.Name});
+    
     if isequal(told, T.t)
         Vpp2d.action(inew) = 1;
     elseif isequal(told, T.t(1:length(told))) % new times appended
@@ -189,7 +103,11 @@ if exist(filereg, 'file')
             ncwrite(filereg, 'ocean_time', T.num);
         end
     else
-        error('Times in existing file do not match Level 1/2 data; cannot modify existing file');
+        if dryrun
+            warning('Times in existing file do not match Level 1/2 data; cannot modify existing file');
+        else
+            error('Times in existing file do not match Level 1/2 data; cannot modify existing file');
+        end
     end
 
 else
@@ -314,6 +232,10 @@ function V = queryvariableinfo(V, ppbase, sim)
 %QUERYVARIABLEINFO Query variable name in file, long name, and units
 
     V.internalshort = strrep(strrep(strrep(V.var, '_integrated', ''), '_surface5m', ''), '_bottom5m', '');
+
+    if startsWith(V.var, 'Iron_')
+        strrep(V.var, 'Iron_', 'Fe_');
+    end
 
     F = dir(fullfile(ppbase, sim, sprintf('Level%d', V.level), sprintf('%s_*_average_%s.nc', sim, V.var)));
     fname = fullfile(F(1).folder, F(1).name);
