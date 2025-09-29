@@ -539,7 +539,7 @@ function adddata(V, Opt, sim, filereg, T, G)
     davgflag = endsWith(V.var, 'integrated') && ...
                ismember(strrep(V.var, '_integrated', ''), Opt.depthavg);
     if davgflag
-        davgvarreg  = ncread(filereg, strrep(V.var, '_integrated', ''));
+        davgvarreg  = ncread(filereg, strrep(V.var, '_integrated', '_depthavg'));
     end
 
     % Where does data need to be added?
