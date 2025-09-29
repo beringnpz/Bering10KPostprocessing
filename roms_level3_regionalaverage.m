@@ -240,17 +240,19 @@ end
 
 % Add/extend data
 
-w = warning('off', 'CDT:ncstructExtraScsField');
-
-fprintf('Adding data: \n')
-for iv = 1:height(Vpp2d)
-
-    fprintf('  %s\n', Vpp2d.var{iv});
-    adddata(Vpp2d(iv,:), Opt, sim, filereg, T, G)
-
+if ~dryrun
+    w = warning('off', 'CDT:ncstructExtraScsField');
+    
+    fprintf('Adding data: \n')
+    for iv = 1:height(Vpp2d)
+    
+        fprintf('  %s\n', Vpp2d.var{iv});
+        adddata(Vpp2d(iv,:), Opt, sim, filereg, T, G)
+    
+    end
+    
+    warning(w);
 end
-
-warning(w);
 
 
 
@@ -529,7 +531,7 @@ function adddata(V, Opt, sim, filereg, T, G)
 
     varreg = ncread(filereg, V.var);
 
-    cpflag = strcmp(V.var, 'temp_bottom5m') && Opt.cpflag;
+    cpflag = Opt.addcoldpool && strcmp(V.var, 'temp_bottom5m');
     if cpflag
         fracbelow0 = ncread(filereg, 'fracbelow0');
         fracbelow1 = ncread(filereg, 'fracbelow1');
@@ -585,16 +587,16 @@ function adddata(V, Opt, sim, filereg, T, G)
 
         if cpflag
             for ir = 1:nmask
-                fracbelow0(ir,loc(tf)) = local(gweight.*double(Tmp.(Vatts.internalshort)(:,:,tf)<0), G.mask(:,:,ir), @nansum)/G.area(ir);
-                fracbelow1(ir,loc(tf)) = local(gweight.*double(Tmp.(Vatts.internalshort)(:,:,tf)<1), G.mask(:,:,ir), @nansum)/G.area(ir);
-                fracbelow2(ir,loc(tf)) = local(gweight.*double(Tmp.(Vatts.internalshort)(:,:,tf)<2), G.mask(:,:,ir), @nansum)/G.area(ir);
+                fracbelow0(ir,loc(tf)) = local(G.weight.*double(Tmp.(Vatts.internalshort)(:,:,tf)<0), G.mask(:,:,ir), @nansum)/G.area(ir);
+                fracbelow1(ir,loc(tf)) = local(G.weight.*double(Tmp.(Vatts.internalshort)(:,:,tf)<1), G.mask(:,:,ir), @nansum)/G.area(ir);
+                fracbelow2(ir,loc(tf)) = local(G.weight.*double(Tmp.(Vatts.internalshort)(:,:,tf)<2), G.mask(:,:,ir), @nansum)/G.area(ir);
             end
         end
         
         % Depth-averaged
         
         if davgflag
-            davgval = Tmp.(Vtbl.internalshort)./(Tmp.zeta + G.depth);
+            davgval = Tmp.(Vatts.internalshort{1})./(Tmp.zeta + G.depth);
             for ir = 1:nmask
                 davgvarreg(ir,loc(tf)) = local(davgval(:,:,tf), G.mask(:,:,ir), 'weight', G.weight, 'omitnan');
             end
